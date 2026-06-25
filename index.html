@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FundMatch</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; color: #111; }
+  .slide { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 64px 80px; border-bottom: 1px solid #e8e8e8; position: relative; }
+  .slide-number { position: absolute; top: 28px; right: 36px; font-size: 12px; color: #bbb; letter-spacing: 1px; }
+  .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #4f8ef7; margin-bottom: 14px; }
+  h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 18px; color: #111; }
+  h2 { font-size: 38px; font-weight: 700; line-height: 1.2; margin-bottom: 14px; color: #111; }
+  .sub { font-size: 18px; color: #666; line-height: 1.55; max-width: 620px; }
+  .pill { display: inline-block; background: #eef4ff; color: #4f8ef7; border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 600; margin-right: 8px; }
+
+  /* Two-col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; align-items: start; }
+
+  /* Stats */
+  .stat-row { display: flex; flex-direction: column; gap: 20px; }
+  .stat-item { border-left: 3px solid #4f8ef7; padding-left: 18px; }
+  .stat-big { font-size: 40px; font-weight: 800; color: #111; line-height: 1; margin-bottom: 4px; }
+  .stat-item h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .stat-item p { font-size: 13px; color: #888; line-height: 1.55; }
+  .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .market-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 18px; }
+  .market-num { font-size: 32px; font-weight: 800; color: #4f8ef7; margin-bottom: 2px; }
+  .market-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .market-card p { font-size: 12px; color: #aaa; line-height: 1.5; }
+
+  /* Customers */
+  .customer-row { display: flex; gap: 20px; margin-top: 40px; }
+  .customer-card { flex: 1; background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 28px; }
+  .customer-card .role { font-size: 11px; color: #4f8ef7; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .customer-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .customer-card p { font-size: 14px; color: #777; line-height: 1.6; }
+  .quote { margin-top: 14px; font-size: 14px; color: #4f8ef7; font-style: italic; }
+
+  /* Phases */
+  .phase-row { display: flex; gap: 0; margin-top: 44px; position: relative; }
+  .phase-row::before { content: ''; position: absolute; top: 28px; left: 40px; right: 40px; height: 2px; background: #e8e8e8; z-index: 0; }
+  .phase { flex: 1; position: relative; z-index: 1; }
+  .phase-dot { width: 16px; height: 16px; border-radius: 50%; background: #4f8ef7; margin: 20px auto 16px; }
+  .phase-dot.v2 { background: #8e4ff7; }
+  .phase-dot.v3 { background: #fff; border: 2px dashed #ccc; }
+  .phase-inner { background: #fff; border: 1.5px solid #e8e8e8; border-radius: 14px; padding: 20px; margin: 0 8px; }
+  .phase-inner.active { border-color: #4f8ef7; }
+  .phase-inner.v2 { border-color: #8e4ff7; }
+  .phase-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .phase-badge.v1 { color: #4f8ef7; }
+  .phase-badge.v2 { color: #8e4ff7; }
+  .phase-badge.v3 { color: #aaa; }
+  .phase-inner h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .phase-inner ul { font-size: 13px; color: #777; padding-left: 16px; line-height: 1.8; }
+
+  /* Claim box */
+  .claim-box { background: #111; border-radius: 20px; padding: 48px; }
+  .claim-box h2 { font-size: 40px; color: #fff; line-height: 1.2; }
+  .claim-box p { font-size: 17px; color: #aaa; margin-top: 14px; max-width: 580px; }
+  .how-row { display: flex; gap: 14px; margin-top: 24px; flex-wrap: wrap; }
+  .how-item { flex: 1; min-width: 140px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
+  .how-item .icon { font-size: 20px; margin-bottom: 6px; }
+  .how-item h4 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .how-item p { font-size: 12px; color: #888; }
+
+  /* Gain numbers */
+  .gain-row { display: flex; gap: 20px; margin-top: 44px; }
+  .gain-card { flex: 1; }
+  .gain-num { font-size: 52px; font-weight: 800; color: #4f8ef7; line-height: 1; margin-bottom: 6px; }
+  .gain-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .gain-card p { font-size: 13px; color: #888; line-height: 1.55; }
+
+  /* Mockups */
+  .mockup-shell { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .mockup-bar { background: #f5f5f5; border-bottom: 1px solid #e8e8e8; padding: 9px 14px; display: flex; gap: 6px; align-items: center; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .mockup-body { padding: 18px; }
+  .mockup-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 10px; }
+  .chat-msg { display: flex; gap: 8px; margin-bottom: 10px; }
+  .chat-msg.user { justify-content: flex-end; }
+  .bubble { padding: 8px 12px; border-radius: 12px; font-size: 12px; line-height: 1.5; max-width: 78%; }
+  .bubble.ai { background: #f0f4ff; color: #333; }
+  .bubble.user { background: #4f8ef7; color: #fff; }
+  .av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+  .result { display: flex; gap: 8px; margin-bottom: 7px; align-items: flex-start; background: #fafafa; border-radius: 8px; padding: 10px 11px; border-left: 3px solid; }
+  .result.go { border-color: #22c55e; }
+  .result.park { border-color: #eab308; }
+  .result.stop { border-color: #ef4444; }
+  .badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 1px; }
+  .badge.go { background: #22c55e; color: #fff; }
+  .badge.park { background: #eab308; color: #fff; }
+  .badge.stop { background: #ef4444; color: #fff; }
+  .rname { font-size: 12px; font-weight: 700; margin-bottom: 1px; }
+  .rreason { font-size: 11px; color: #999; }
+  .cta-btn { display: block; margin-top: 12px; background: #4f8ef7; color: #fff; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 8px; text-align: center; }
+  .prop-field { margin-bottom: 12px; }
+  .prop-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 4px; }
+  .prop-value { font-size: 12px; color: #333; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 8px 10px; line-height: 1.5; }
+  .prop-value.ai-gen { border-color: #c7d9ff; background: #f0f5ff; }
+  .ai-badge { display: inline-block; font-size: 10px; background: #eef4ff; color: #4f8ef7; border-radius: 6px; padding: 1px 6px; font-weight: 600; margin-left: 6px; }
+  .dash-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .dash-stat { flex: 1; background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
+  .dash-stat .num { font-size: 22px; font-weight: 800; color: #111; }
+  .dash-stat .lbl { font-size: 10px; color: #aaa; margin-top: 2px; }
+  .app-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+  .app-row:last-child { border-bottom: none; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .app-name { font-weight: 600; flex: 1; }
+  .app-amount { color: #888; font-size: 11px; }
+  .app-deadline { font-size: 11px; color: #bbb; }
+  .status-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<!-- 01: Hero -->
+<div class="slide" style="background: #fff; padding: 0; overflow: hidden; position: relative;">
+  <div class="slide-number" style="z-index:2; color: #fff;">01 / 14</div>
+  <div style="position: absolute; inset: 0; z-index: 0;">
+    <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1400&q=80" alt="" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.3);" />
+  </div>
+  <div style="position: relative; z-index: 1; padding: 64px 80px; display: flex; flex-direction: column; justify-content: center; min-height: 100vh;">
+    <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; color: #4f8ef7; margin-bottom: 20px;">FundMatch</div>
+    <h1 style="color: #fff; font-size: 64px;">Stop searching.<br><span style="color: #4f8ef7;">Start matching.</span></h1>
+    <p class="sub" style="color: #ccc;">AI that finds the right foundations for your project — and helps you win them.</p>
+    <div style="margin-top: 28px;">
+      <span class="pill" style="background: rgba(255,255,255,0.1); color: #7eb3ff;">🇳🇱 Starting in the Netherlands</span>
+      <span class="pill" style="background: rgba(255,255,255,0.1); color: #7eb3ff;">🌍 Scaling to Europe</span>
+    </div>
+  </div>
+</div>
+
+<!-- 02: Problem + Market -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">02 / 14</div>
+  <div class="label">The Opportunity</div>
+  <h2>A broken process.<br>A massive market.</h2>
+  <div class="two-col">
+    <div class="stat-row">
+      <div class="stat-item">
+        <div class="stat-big">40+</div>
+        <h3>Hours wasted per search</h3>
+        <p>Nonprofits manually browse databases and read annual reports — most of it leads nowhere.</p>
+      </div>
+      <div class="stat-item">
+        <div class="stat-big">~10%</div>
+        <h3>Average grant success rate</h3>
+        <p>Most applications fail because the fit was never properly assessed before writing.</p>
+      </div>
+      <div class="stat-item">
+        <div class="stat-big">0</div>
+        <h3>Modern AI tools for this</h3>
+        <p>No product combines discovery, writing, and reporting in one intelligent workflow — yet.</p>
+      </div>
+    </div>
+    <div>
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 12px;">Netherlands alone</div>
+      <div class="market-grid">
+        <div class="market-card"><div class="market-num">43K+</div><h3>ANBI foundations</h3><p>Registered grant-giving foundations, publicly searchable but impossible to navigate manually.</p></div>
+        <div class="market-card"><div class="market-num">20K+</div><h3>Nonprofits & NGOs</h3><p>Active organisations seeking funding every year.</p></div>
+        <div class="market-card"><div class="market-num">€4.1B</div><h3>Sector spend (2024)</h3><p>Growing 11% YoY — the money is there.</p></div>
+        <div class="market-card"><div class="market-num">🌍</div><h3>Same model in DE, BE, UK</h3><p>Comparable or larger markets — phase 2.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 03: Why Now -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">03 / 14</div>
+  <div class="label">Why Now</div>
+  <h2>Three forces converging<br>right now.</h2>
+  <p class="sub">FundMatch wouldn't have been possible 3 years ago. Today, all the ingredients are ready.</p>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px;">
+    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 28px;">
+      <div style="font-size: 36px; margin-bottom: 14px;">🤖</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 8px;">Conversational AI is mature</h3>
+      <p style="font-size: 14px; color: #777; line-height: 1.6;">Large language models (Claude, GPT-4) can now hold nuanced conversations, extract structured data, and write compelling grant proposals — at production quality. This wasn't true in 2021.</p>
+    </div>
+    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 28px;">
+      <div style="font-size: 36px; margin-bottom: 14px;">🗃️</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 8px;">Foundation data is accessible</h3>
+      <p style="font-size: 14px; color: #777; line-height: 1.6;">The Dutch ANBI registry (Belastingdienst) is public and machine-readable. 43,000+ foundations with sector, geography, and financial data — ready to be matched against at scale.</p>
+    </div>
+    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 28px;">
+      <div style="font-size: 36px; margin-bottom: 14px;">📈</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 8px;">Sector demand is growing</h3>
+      <p style="font-size: 14px; color: #777; line-height: 1.6;">NL nonprofit sector spend grew 11% in 2024. More organisations need more funding, with smaller teams. The pressure to do more with less is creating urgency for better tools.</p>
+    </div>
+  </div>
+  <div style="margin-top: 24px; background: #111; border-radius: 12px; padding: 18px 24px; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 24px;">⚡</span>
+    <span>The window is open <strong style="color: #4f8ef7;">right now</strong> — before a well-funded competitor builds this for Europe.</span>
+  </div>
+</div>
+
+<!-- 04: Competitor Landscape -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">04 / 14</div>
+  <div class="label">Competitive Landscape</div>
+  <h2>The market is wide open.</h2>
+  <p class="sub">Existing tools are either manual databases or US-only SaaS. Nobody has built an AI-native matching platform for Europe.</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 36px;">
+
+    <div>
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 14px;">What exists today</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">📋</span>
+          <div><div style="font-size: 14px; font-weight: 700; margin-bottom: 3px;">Manual databases <span style="font-size: 11px; color: #aaa; font-weight: 400;">(Fondsenwijzer, FIN)</span></div><div style="font-size: 13px; color: #888;">Search by keyword. No matching, no AI, no workflow. You still do all the work.</div></div>
+        </div>
+        <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">🇺🇸</span>
+          <div><div style="font-size: 14px; font-weight: 700; margin-bottom: 3px;">US-only platforms <span style="font-size: 11px; color: #aaa; font-weight: 400;">(Instrumentl, Candid)</span></div><div style="font-size: 13px; color: #888;">Good AI matching, but built for the US grant ecosystem. No European foundation data. No NL language support.</div></div>
+        </div>
+        <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">📝</span>
+          <div><div style="font-size: 14px; font-weight: 700; margin-bottom: 3px;">Generic AI writing tools <span style="font-size: 11px; color: #aaa; font-weight: 400;">(ChatGPT, Jasper)</span></div><div style="font-size: 13px; color: #888;">Can help draft text, but don't know foundations, eligibility criteria, or grant context. No matching.</div></div>
+        </div>
+        <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">📊</span>
+          <div><div style="font-size: 14px; font-weight: 700; margin-bottom: 3px;">Financial admin tools <span style="font-size: 11px; color: #aaa; font-weight: 400;">(Penningwijs)</span></div><div style="font-size: 13px; color: #888;">Manage money after you have it. Complementary — not a competitor. Partnership potential.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 14px;">Where FundMatch sits</div>
+      <!-- 2x2 positioning map -->
+      <div style="position: relative; background: #fafafa; border: 1px solid #e8e8e8; border-radius: 14px; padding: 20px; height: 300px;">
+        <!-- Axes -->
+        <div style="position: absolute; left: 50%; top: 16px; bottom: 16px; width: 1px; background: #e0e0e0;"></div>
+        <div style="position: absolute; top: 50%; left: 16px; right: 16px; height: 1px; background: #e0e0e0;"></div>
+        <!-- Axis labels -->
+        <div style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #aaa; white-space: nowrap;">AI-powered</div>
+        <div style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #aaa; white-space: nowrap;">Manual</div>
+        <div style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%) rotate(-90deg); font-size: 10px; color: #aaa; white-space: nowrap;">NL/EU focus</div>
+        <div style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%) rotate(90deg); font-size: 10px; color: #aaa; white-space: nowrap;">US focus</div>
+        <!-- Competitors -->
+        <div style="position: absolute; right: 22%; top: 22%; font-size: 11px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 3px 8px; color: #888;">Instrumentl</div>
+        <div style="position: absolute; right: 18%; top: 35%; font-size: 11px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 3px 8px; color: #888;">Candid</div>
+        <div style="position: absolute; left: 18%; bottom: 28%; font-size: 11px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 3px 8px; color: #888;">Fondsenwijzer</div>
+        <div style="position: absolute; left: 24%; bottom: 18%; font-size: 11px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 3px 8px; color: #888;">FIN</div>
+        <div style="position: absolute; left: 14%; top: 18%; font-size: 12px; background: #4f8ef7; color: #fff; border-radius: 8px; padding: 5px 12px; font-weight: 700; box-shadow: 0 2px 8px rgba(79,142,247,0.4);">⚡ FundMatch</div>
+      </div>
+      <div style="margin-top: 12px; font-size: 13px; color: #666; background: #eef4ff; border-radius: 8px; padding: 10px 14px;">
+        FundMatch is the <strong>only AI-native grant matching platform built for the European market</strong> — that's the white space.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 05: Customers -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">05 / 14</div>
+  <div class="label">Who We Serve</div>
+  <h2>Two users. One platform.</h2>
+  <div class="customer-row">
+    <div class="customer-card">
+      <div class="role">Primary · Small orgs</div>
+      <h3>The Founder / Director</h3>
+      <p>Runs a small NGO, church, or social enterprise. Does everything themselves. Needs to find funding fast without becoming a grant expert.</p>
+      <div class="quote">"I know what we do. I just don't know who will fund it."</div>
+    </div>
+    <div class="customer-card">
+      <div class="role">Power user · Larger orgs</div>
+      <h3>The Fundraiser</h3>
+      <p>Dedicated grant writer at a larger nonprofit. Manages 10–20 applications at once. Needs a system: find → write → track → report.</p>
+      <div class="quote">"I waste half my week searching. I should be writing."</div>
+    </div>
+  </div>
+  <p style="margin-top: 20px; font-size: 13px; color: #bbb;">Also: churches, faith-based orgs, educational institutions, cultural foundations</p>
+</div>
+
+<!-- 06: Phases -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">06 / 14</div>
+  <div class="label">The Product Roadmap</div>
+  <h2>Built in three phases.</h2>
+  <p class="sub">V1 ships the core AI matching engine. Everything else extends from it.</p>
+  <div class="phase-row">
+    <div class="phase">
+      <div class="phase-dot"></div>
+      <div class="phase-inner active">
+        <div class="phase-badge v1">⚡ V1 — Core</div>
+        <h3>🔍 AI Matching Engine</h3>
+        <ul>
+          <li>Conversational AI onboarding</li>
+          <li>Org profile (auto-populated)</li>
+          <li>50K+ foundation database</li>
+          <li>GO / PARK / STOP scoring</li>
+          <li>Ranked shortlist + reasoning</li>
+          <li>Refine results in conversation</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="phase-dot v2"></div>
+      <div class="phase-inner v2">
+        <div class="phase-badge v2">V1 Extension</div>
+        <h3>✍️ Proposal Writing</h3>
+        <ul>
+          <li>Foundation-specific templates</li>
+          <li>AI drafts from org profile</li>
+          <li>Human review & editing</li>
+          <li>Submit & track status</li>
+          <li>Document storage</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="phase-dot v3"></div>
+      <div class="phase-inner" style="border-style: dashed;">
+        <div class="phase-badge v3">V2</div>
+        <h3>📊 Reporting & CRM</h3>
+        <ul>
+          <li>Grant tracking dashboard</li>
+          <li>Spending vs. budget</li>
+          <li>AI progress reports</li>
+          <li>Deadline calendar</li>
+          <li>Funder relationship history</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 07: The Claim (split from old slide 5) -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">07 / 14</div>
+  <div class="label">What We Do</div>
+  <div class="claim-box">
+    <h2>Tell us about your project.<br>We'll find who should fund it.</h2>
+    <p>A conversational AI agent that interviews you, searches 50,000+ foundations, and returns a scored shortlist — in minutes, not weeks.</p>
+    <div class="how-row">
+      <div class="how-item"><div class="icon">💬</div><h4>Conversational onboarding</h4><p>No forms. Just a conversation.</p></div>
+      <div class="how-item"><div class="icon">🎯</div><h4>AI matching & scoring</h4><p>GO / PARK / STOP with reasons.</p></div>
+      <div class="how-item"><div class="icon">✍️</div><h4>Proposal drafting</h4><p>From match to draft in one click.</p></div>
+      <div class="how-item"><div class="icon">📊</div><h4>Reporting & tracking</h4><p>Deadlines, budgets, progress.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 08: What You Gain (split from old slide 5) -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">08 / 14</div>
+  <div class="label">What You Gain</div>
+  <h2>Less searching.<br>More winning.</h2>
+  <div class="gain-row">
+    <div class="gain-card"><div class="gain-num">10×</div><h3>Faster discovery</h3><p>Weeks of searching → a shortlist in minutes.</p></div>
+    <div class="gain-card"><div class="gain-num">3×</div><h3>Higher hit rate</h3><p>Apply only where you genuinely fit.</p></div>
+    <div class="gain-card"><div class="gain-num">80%</div><h3>Less writing time</h3><p>AI drafts from your profile. You refine.</p></div>
+    <div class="gain-card"><div class="gain-num">0</div><h3>Missed deadlines</h3><p>Built-in tracking across all applications.</p></div>
+  </div>
+</div>
+
+<!-- 09: Mockups -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">09 / 14</div>
+  <div class="label">The Product</div>
+  <h2>Three screens. One workflow.</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 28px;">
+    <div>
+      <div class="mockup-label">1 · AI Interview & Match</div>
+      <div class="mockup-shell">
+        <div class="mockup-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c840"></div><span style="font-size:11px;color:#aaa;margin-left:6px;">FundMatch — Subsidie Assistent</span></div>
+        <div class="mockup-body">
+          <div class="chat-msg"><div class="av" style="background:#eef4ff;">🤖</div><div class="bubble ai">Vertel me over je project — wat wil je bereiken?</div></div>
+          <div class="chat-msg user"><div class="bubble user">We trainen 40 kerkleiders per jaar. Budget €85.000.</div><div class="av" style="background:#e8e8e8;">👤</div></div>
+          <div class="chat-msg"><div class="av" style="background:#eef4ff;">🤖</div><div class="bubble ai">Heeft de organisatie ANBI-status?</div></div>
+          <div class="chat-msg user"><div class="bubble user">Ja, ANBI. Vorig jaar €20k van VSBfonds.</div><div class="av" style="background:#e8e8e8;">👤</div></div>
+          <div class="chat-msg"><div class="av" style="background:#eef4ff;">🤖</div><div class="bubble ai">Ik zoek door 50.000+ fondsen... ✨</div></div>
+          <div style="margin-top: 10px; border-top: 1px solid #f0f0f0; padding-top: 10px;">
+            <div style="font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Top matches</div>
+            <div class="result go"><span class="badge go">GO 94%</span><div><div class="rname">Stichting Doen</div><div class="rreason">Capaciteitsopbouw, €60k–€120k</div></div></div>
+            <div class="result go"><span class="badge go">GO 88%</span><div><div class="rname">VSBfonds</div><div class="rreason">Leiderschap & talent</div></div></div>
+            <div class="result park"><span class="badge park">PARK 61%</span><div><div class="rname">Oranje Fonds</div><div class="rreason">Budget boven grens — deelproject?</div></div></div>
+            <div class="result stop"><span class="badge stop">STOP 12%</span><div><div class="rname">Prins Bernhard Cultuurfonds</div><div class="rreason">Alleen culturele projecten</div></div></div>
+          </div>
+          <a class="cta-btn">✍️ Start aanvraag voor Stichting Doen →</a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-label">2 · Proposal Writer</div>
+      <div class="mockup-shell">
+        <div class="mockup-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c840"></div><span style="font-size:11px;color:#aaa;margin-left:6px;">FundMatch — Aanvraag</span></div>
+        <div class="mockup-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <span style="font-size: 12px; font-weight: 700;">Stichting Doen <span style="color:#22c55e; font-size:10px; background:#f0fff4; padding:1px 6px; border-radius:6px; font-weight:600;">GO 94%</span></span>
+            <span style="font-size: 10px; color: #aaa;">Deadline: 1 mrt</span>
+          </div>
+          <div class="prop-field"><div class="prop-label">Projectnaam</div><div class="prop-value">Kerkelijk Leiderschap in Actie 2026</div></div>
+          <div class="prop-field"><div class="prop-label">Omschrijving <span class="ai-badge">AI ✨</span></div><div class="prop-value ai-gen">Stichting [Naam] traint jaarlijks 40 kerkleiders in zakelijk leiderschap en strategie. Door deze competenties te versterken, vergroten kerken hun maatschappelijke impact...</div></div>
+          <div class="prop-field"><div class="prop-label">Doelgroep <span class="ai-badge">AI ✨</span></div><div class="prop-value ai-gen">Kerkleiders uit heel Nederland, voornamelijk kleinere gemeenten (50–500 leden).</div></div>
+          <div class="prop-field"><div class="prop-label">Gevraagd bedrag</div><div class="prop-value">€ 85.000</div></div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <div style="flex:1; background: #4f8ef7; color:#fff; font-size:12px; font-weight:600; padding:7px; border-radius:7px; text-align:center;">Indienen</div>
+            <div style="flex:1; background: #f5f5f5; color:#555; font-size:12px; font-weight:600; padding:7px; border-radius:7px; text-align:center;">Opslaan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-label">3 · Grant Dashboard</div>
+      <div class="mockup-shell">
+        <div class="mockup-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28c840"></div><span style="font-size:11px;color:#aaa;margin-left:6px;">FundMatch — Mijn aanvragen</span></div>
+        <div class="mockup-body">
+          <div class="dash-row">
+            <div class="dash-stat"><div class="num">8</div><div class="lbl">Actief</div></div>
+            <div class="dash-stat"><div class="num" style="color:#22c55e;">3</div><div class="lbl">Toegekend</div></div>
+            <div class="dash-stat"><div class="num" style="color:#4f8ef7;">€142k</div><div class="lbl">Binnengehaald</div></div>
+          </div>
+          <div style="font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 6px;">Lopende aanvragen</div>
+          <div class="app-row"><div class="status-dot" style="background:#eab308;"></div><div class="app-name">Stichting Doen</div><div class="app-amount">€85k</div><span class="status-tag" style="background:#fffbea;color:#b45309;">In behandeling</span><div class="app-deadline">1 mrt</div></div>
+          <div class="app-row"><div class="status-dot" style="background:#22c55e;"></div><div class="app-name">VSBfonds</div><div class="app-amount">€40k</div><span class="status-tag" style="background:#f0fff4;color:#15803d;">Toegekend ✓</span><div class="app-deadline">—</div></div>
+          <div class="app-row"><div class="status-dot" style="background:#4f8ef7;"></div><div class="app-name">Oranje Fonds</div><div class="app-amount">€30k</div><span class="status-tag" style="background:#eef4ff;color:#1d4ed8;">Concept</span><div class="app-deadline">15 apr</div></div>
+          <div class="app-row"><div class="status-dot" style="background:#ef4444;"></div><div class="app-name">Kansfonds</div><div class="app-amount">€25k</div><span class="status-tag" style="background:#fff5f5;color:#b91c1c;">Afgewezen</span><div class="app-deadline">—</div></div>
+          <div style="margin-top: 12px; background: #fff8eb; border-radius: 8px; padding: 8px 10px; font-size: 11px; color: #92400e;">⏰ <strong>Herinnering:</strong> Voortgangsrapportage VSBfonds binnen 14 dagen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 10: AI Flywheel -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">10 / 14</div>
+  <div class="label">The Moat</div>
+  <h2>The more it's used,<br>the smarter it gets.</h2>
+  <p class="sub">FundMatch learns continuously from every interaction — building a competitive advantage no one can copy from a cold start.</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 860px; width: 100%; margin-top: 36px;">
+    <div style="background: #fafafa; border: 1.5px solid #4f8ef7; border-radius: 14px; padding: 22px; position: relative;">
+      <div style="font-size: 22px; margin-bottom: 8px;">💬</div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">User describes their project</h3>
+      <p style="font-size: 13px; color: #777; line-height: 1.6;">Every onboarding adds structured data: org type, sector, budget range, geography, cause area.</p>
+      <div style="position: absolute; bottom: -12px; left: 50%; width: 22px; height: 22px; background: #4f8ef7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; transform: translateX(-50%); z-index: 1;">↓</div>
+    </div>
+    <div style="background: #fafafa; border: 1.5px solid #8e4ff7; border-radius: 14px; padding: 22px; position: relative;">
+      <div style="font-size: 22px; margin-bottom: 8px;">📈</div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Model improves for everyone</h3>
+      <p style="font-size: 13px; color: #777; line-height: 1.6;">Anonymised learnings feed back — every new user benefits from all previous users. <span style="color:#4f8ef7; font-weight:600;">Data stays private.</span></p>
+      <div style="position: absolute; bottom: -12px; left: 50%; width: 22px; height: 22px; background: #8e4ff7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; transform: translateX(-50%); z-index: 1;">↓</div>
+    </div>
+    <div style="background: #fafafa; border: 1.5px solid #4f8ef7; border-radius: 14px; padding: 22px; position: relative;">
+      <div style="font-size: 22px; margin-bottom: 8px;">🎯</div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">AI suggests matches</h3>
+      <p style="font-size: 13px; color: #777; line-height: 1.6;">The model ranks foundations by fit. Users accept, reject, or refine — each signal trains the next match.</p>
+      <div style="position: absolute; top: -12px; left: 50%; width: 22px; height: 22px; background: #4f8ef7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; transform: translateX(-50%); z-index: 1;">↑</div>
+    </div>
+    <div style="background: #fafafa; border: 1.5px solid #8e4ff7; border-radius: 14px; padding: 22px; position: relative;">
+      <div style="font-size: 22px; margin-bottom: 8px;">✍️</div>
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Proposals win or lose</h3>
+      <p style="font-size: 13px; color: #777; line-height: 1.6;">Awarded grants teach the AI what language and framing works for which foundation. Rejections teach what doesn't.</p>
+      <div style="position: absolute; top: -12px; left: 50%; width: 22px; height: 22px; background: #8e4ff7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; transform: translateX(-50%); z-index: 1;">↑</div>
+    </div>
+  </div>
+  <div style="text-align: center; margin-top: 24px;">
+    <div style="display: inline-flex; align-items: center; gap: 10px; background: #111; color: #fff; border-radius: 50px; padding: 10px 24px; font-size: 14px; font-weight: 600;">
+      <span style="font-size: 18px;">🔄</span> The FundMatch Flywheel — more users = better matches = more users
+    </div>
+  </div>
+</div>
+
+<!-- 11: Business Model -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">11 / 14</div>
+  <div class="label">Business Model</div>
+  <h2>How FundMatch makes money.</h2>
+  <p class="sub">Two complementary models — freemium drives discovery, subscriptions drive revenue.</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px;">
+    <div style="background: #fff; border: 1.5px solid #e8e8e8; border-radius: 16px; padding: 28px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #4f8ef7; margin-bottom: 10px;">Option A — Freemium</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Free tier → Paid upgrade</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #eef4ff; color: #4f8ef7; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">FREE</span><div style="font-size: 13px; color: #555; line-height: 1.5;">AI matching — up to 3 searches/month. Top 5 results. No proposal writing.</div></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #f0fff4; color: #15803d; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">€49/mo</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Starter — unlimited matching, full shortlist, 5 AI proposals/month.</div></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #fffbea; color: #b45309; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">€149/mo</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Pro — unlimited proposals, reporting, deadline tracking, multi-user.</div></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #f5f0ff; color: #6d28d9; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">Custom</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Agency / umbrella orgs — multiple client accounts, white-label.</div></div>
+      </div>
+      <div style="background: #f9fafb; border-radius: 10px; padding: 12px; font-size: 13px; color: #666;"><strong>Pro:</strong> Low barrier, word-of-mouth growth, users self-qualify.<br/><strong>Con:</strong> Free tier has support cost. Slower revenue ramp.</div>
+    </div>
+    <div style="background: #fff; border: 1.5px solid #e8e8e8; border-radius: 16px; padding: 28px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8e4ff7; margin-bottom: 10px;">Option B — Paid-only with Trial</div>
+      <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">14-day free trial → Subscribe</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #f5f0ff; color: #6d28d9; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">€79/mo</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Solo — 1 user, unlimited matching, 10 proposals/month, basic reporting.</div></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #f5f0ff; color: #6d28d9; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">€199/mo</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Team — 5 users, unlimited proposals, full reporting + CRM, API access.</div></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start;"><span style="background: #f5f0ff; color: #6d28d9; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;">Custom</span><div style="font-size: 13px; color: #555; line-height: 1.5;">Enterprise / consultancies — multi-org, white-label, dedicated support.</div></div>
+      </div>
+      <div style="background: #f9fafb; border-radius: 10px; padding: 12px; font-size: 13px; color: #666;"><strong>Pro:</strong> Cleaner unit economics, faster revenue.<br/><strong>Con:</strong> Higher acquisition friction, needs outbound sales.</div>
+    </div>
+  </div>
+  <div style="margin-top: 20px; background: #eef4ff; border-radius: 12px; padding: 16px 20px; font-size: 14px; color: #1d4ed8; border-left: 4px solid #4f8ef7;">
+    <strong>Recommendation:</strong> Start with <strong>Freemium</strong> for NL market penetration. Switch to paid-only once brand is established or when expanding to the agency/enterprise segment.
+  </div>
+</div>
+
+<!-- 12: Go-to-Market -->
+<div class="slide" style="background: #fff;">
+  <div class="slide-number">12 / 14</div>
+  <div class="label">Go-to-Market</div>
+  <h2>How we get to 100 paying customers.</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 36px;">
+    <div style="background: #fafafa; border: 1.5px solid #4f8ef7; border-radius: 16px; padding: 24px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #4f8ef7; margin-bottom: 8px;">Phase 1 · Month 1–3</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">🌱 Pilot & Validate</h3>
+      <ul style="font-size: 13px; color: #666; padding-left: 16px; line-height: 1.9;">
+        <li>5–10 pilot customers (hand-picked)</li>
+        <li>Churches & faith-based orgs (your network)</li>
+        <li>Free access in exchange for feedback</li>
+        <li>Weekly calls to refine the product</li>
+        <li>Build ANBI database + first matches</li>
+      </ul>
+      <div style="margin-top: 14px; font-size: 12px; color: #4f8ef7; font-weight: 600;">Goal: product-market fit signal</div>
+    </div>
+    <div style="background: #fafafa; border: 1.5px solid #8e4ff7; border-radius: 16px; padding: 24px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8e4ff7; margin-bottom: 8px;">Phase 2 · Month 3–9</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">🚀 Community-led Growth</h3>
+      <ul style="font-size: 13px; color: #666; padding-left: 16px; line-height: 1.9;">
+        <li>Launch freemium publicly</li>
+        <li>Partner with Goede Doelen Nederland</li>
+        <li>Content: "how to find subsidies" SEO</li>
+        <li>LinkedIn targeting NL fundraisers</li>
+        <li>Webinars via sector associations</li>
+        <li>Referral program between orgs</li>
+      </ul>
+      <div style="margin-top: 14px; font-size: 12px; color: #8e4ff7; font-weight: 600;">Goal: 50 paying customers</div>
+    </div>
+    <div style="background: #fafafa; border: 1.5px solid #e8e8e8; border-radius: 16px; padding: 24px; border-style: dashed;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 8px;">Phase 3 · Month 9–18</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 12px;">🌍 Scale to Europe</h3>
+      <ul style="font-size: 13px; color: #666; padding-left: 16px; line-height: 1.9;">
+        <li>Add German & Belgian databases</li>
+        <li>Localise (DE/FR/EN)</li>
+        <li>Target fundraising consultancies</li>
+        <li>Agency/white-label tier</li>
+        <li>Explore Penningwijs partnership</li>
+      </ul>
+      <div style="margin-top: 14px; font-size: 12px; color: #aaa; font-weight: 600;">Goal: 500 customers, €500k ARR</div>
+    </div>
+  </div>
+  <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+    <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; text-align: center;"><div style="font-size: 22px; margin-bottom: 6px;">🤝</div><div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Your Network</div><div style="font-size: 12px; color: #aaa;">Churches & faith orgs — fastest path to first 10 customers</div></div>
+    <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; text-align: center;"><div style="font-size: 22px; margin-bottom: 6px;">🔍</div><div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">SEO Content</div><div style="font-size: 12px; color: #aaa;">"Subsidies voor kerken", "fondsen aanvragen NL" — high intent, low cost</div></div>
+    <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; text-align: center;"><div style="font-size: 22px; margin-bottom: 6px;">🏛️</div><div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Sector Partners</div><div style="font-size: 12px; color: #aaa;">Goede Doelen NL, CBF, FIN — access to thousands of orgs at once</div></div>
+    <div style="background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 16px; text-align: center;"><div style="font-size: 22px; margin-bottom: 6px;">💼</div><div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">Penningwijs</div><div style="font-size: 12px; color: #aaa;">Complementary product — joint offer: find money + manage it</div></div>
+  </div>
+</div>
+
+<!-- 13: Revenue & Growth -->
+<div class="slide" style="background: #fafafa;">
+  <div class="slide-number">13 / 14</div>
+  <div class="label">Revenue Potential</div>
+  <h2>Year 1 growth model.</h2>
+  <p class="sub">Conservative projections based on NL market. Freemium drives free-to-paid conversion from month 4.</p>
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 36px; align-items: start;">
+    <div>
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 16px;">Monthly Recurring Revenue (MRR) — Year 1</div>
+      <div style="display: flex; align-items: flex-end; gap: 6px; height: 160px;">
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 1%; background: #e8e8e8; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M1</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 1%; background: #e8e8e8; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M2</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 1%; background: #e8e8e8; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M3</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 5%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M4</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 10%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M5</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 18%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M6</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 28%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M7</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 38%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M8</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 52%; background: #4f8ef7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M9</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 64%; background: #8e4ff7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M10</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 80%; background: #8e4ff7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M11</div></div>
+        <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;"><div style="width: 100%; height: 100%; background: #8e4ff7; border-radius: 4px 4px 0 0;"></div><div style="font-size: 9px; color: #bbb; margin-top: 4px;">M12</div></div>
+      </div>
+      <div style="border-top: 1px solid #e8e8e8; padding-top: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #aaa;">
+        <span>€0</span><span>€2.5k</span><span>€5k</span><span>€7.5k</span><span style="color: #8e4ff7; font-weight: 700;">€10.3k MRR</span>
+      </div>
+      <div style="margin-top: 10px; display: flex; gap: 16px; font-size: 12px;">
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width:10px;height:10px;background:#e8e8e8;border-radius:2px;display:inline-block;"></span>Pilot (free)</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width:10px;height:10px;background:#4f8ef7;border-radius:2px;display:inline-block;"></span>Freemium growth</span>
+        <span style="display: flex; align-items: center; gap: 5px;"><span style="width:10px;height:10px;background:#8e4ff7;border-radius:2px;display:inline-block;"></span>Scaling</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 18px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 10px;">End of Year 1</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div><div style="font-size: 28px; font-weight: 800; color: #111;">100</div><div style="font-size: 12px; color: #aaa;">paying customers</div></div>
+          <div><div style="font-size: 28px; font-weight: 800; color: #8e4ff7;">€10.3k</div><div style="font-size: 12px; color: #aaa;">MRR</div></div>
+          <div><div style="font-size: 28px; font-weight: 800; color: #111;">€124k</div><div style="font-size: 12px; color: #aaa;">ARR run rate</div></div>
+          <div><div style="font-size: 28px; font-weight: 800; color: #22c55e;">400+</div><div style="font-size: 12px; color: #aaa;">free users</div></div>
+        </div>
+      </div>
+      <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 18px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #bbb; margin-bottom: 10px;">Revenue mix at M12</div>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>60× Starter (€49)</span><span style="font-weight: 700;">€2,940/mo</span></div>
+          <div style="background: #e8e8e8; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 4px;"><div style="width: 29%; height: 100%; background: #4f8ef7; border-radius: 4px;"></div></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>35× Pro (€149)</span><span style="font-weight: 700;">€5,215/mo</span></div>
+          <div style="background: #e8e8e8; border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 4px;"><div style="width: 51%; height: 100%; background: #8e4ff7; border-radius: 4px;"></div></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>5× Enterprise (€427)</span><span style="font-weight: 700;">€2,135/mo</span></div>
+          <div style="background: #e8e8e8; border-radius: 4px; height: 5px; overflow: hidden;"><div style="width: 21%; height: 100%; background: #f7a04f; border-radius: 4px;"></div></div>
+        </div>
+      </div>
+      <div style="background: #eef4ff; border-radius: 12px; padding: 14px; font-size: 12px; color: #1d4ed8; line-height: 1.6;"><strong>Assumptions:</strong> 5% monthly free→paid conversion · 15% monthly customer growth from M4 · Churn &lt;3%/mo · No enterprise until M9</div>
+    </div>
+  </div>
+  <div style="margin-top: 24px; background: #111; border-radius: 14px; padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div><div style="font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Year 2 — Expand to BE + DE</div><div style="font-size: 22px; font-weight: 800; color: #fff;">500 customers · <span style="color: #4f8ef7;">€500k ARR</span></div></div>
+    <div style="display: flex; gap: 24px;">
+      <div style="text-align: center;"><div style="font-size: 22px; font-weight: 800; color: #4fff8e;">5×</div><div style="font-size: 12px; color: #666;">customer growth</div></div>
+      <div style="text-align: center;"><div style="font-size: 22px; font-weight: 800; color: #4fff8e;">4×</div><div style="font-size: 12px; color: #666;">revenue growth</div></div>
+      <div style="text-align: center;"><div style="font-size: 22px; font-weight: 800; color: #4fff8e;">3</div><div style="font-size: 12px; color: #666;">countries</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 14: CTA / Closing -->
+<div class="slide" style="background: #111; padding: 0; overflow: hidden; position: relative;">
+  <div class="slide-number" style="color: #444;">14 / 14</div>
+  <div style="position: absolute; inset: 0; z-index: 0;">
+    <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1400&q=80" alt="" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.15);" />
+  </div>
+  <div style="position: relative; z-index: 1; padding: 64px 80px; display: flex; flex-direction: column; justify-content: center; min-height: 100vh;">
+    <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; color: #4f8ef7; margin-bottom: 20px;">FundMatch</div>
+    <h1 style="color: #fff; font-size: 56px; max-width: 700px;">Ready to help nonprofits find the funding they deserve.</h1>
+    <p style="font-size: 19px; color: #aaa; margin-top: 16px; max-width: 560px; line-height: 1.55;">We're looking for 10 pilot partners in the Netherlands to shape the product and get early access — free.</p>
+
+    <div style="display: flex; gap: 16px; margin-top: 40px; flex-wrap: wrap;">
+      <div style="background: #4f8ef7; color: #fff; font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 10px; cursor: pointer;">Join the pilot →</div>
+      <div style="background: rgba(255,255,255,0.08); color: #fff; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.15);">Schedule a demo</div>
+    </div>
+
+    <div style="margin-top: 48px; display: flex; gap: 40px; flex-wrap: wrap;">
+      <div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 4px;">Contact</div>
+        <div style="font-size: 15px; color: #ccc;">jonathan@breakthroughbusiness.nl</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 4px;">Product</div>
+        <div style="font-size: 15px; color: #ccc;">fundmatch.ai</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 4px;">Starting in</div>
+        <div style="font-size: 15px; color: #ccc;">🇳🇱 Netherlands · 2025</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
